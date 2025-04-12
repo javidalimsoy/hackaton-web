@@ -1,0 +1,74 @@
+import React, { useState } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Upload } from 'lucide-react';
+
+export default function CSVUploader() {
+  const [csvData, setCsvData] = useState(null);
+  const [fileName, setFileName] = useState("");
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    setFileName(file.name);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("http://localhost:5000/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+      setCsvData(result.orders);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
+  };
+
+  return (
+    <div className="p-6 space-y-4">
+      <Card className="max-w-xl mx-auto">
+        <CardContent className="flex flex-col items-center space-y-4 p-6">
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Button variant="outline">
+              <Upload className="mr-2 h-4 w-4" /> Upload CSV
+            </Button>
+          </label>
+          {fileName && <p className="text-sm text-gray-500">Uploaded: {fileName}</p>}
+        </CardContent>
+      </Card>
+
+      {csvData && (
+        <div className="overflow-x-auto">
+          <table className="table-auto w-full text-sm border border-gray-200">
+            <thead>
+              <tr className="bg-gray-100">
+                {Object.keys(csvData[0]).map((key) => (
+                  <th key={key} className="px-4 py-2 border">{key}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {csvData.map((row, index) => (
+                <tr key={index} className="odd:bg-white even:bg-gray-50">
+                  {Object.values(row).map((value, i) => (
+                    <td key={i} className="px-4 py-2 border">{value}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
